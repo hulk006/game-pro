@@ -137,7 +137,6 @@ int Ai::Ai_FCR(int &bet,int &gamepool,Machine &machine)
     if (chip_ - bet < 400 && hand_strength < 0.5)
     {
         RR_ = 0.1;
-
         return 0;//fold
     }
     //特殊情况 很大的几率获胜
@@ -148,7 +147,7 @@ int Ai::Ai_FCR(int &bet,int &gamepool,Machine &machine)
     }
 
     //第一轮
-    if(bet == 0)
+    if(bet == 0 || gamepool < 200)
     {
         if(hand_strength < 0.3)
         {
@@ -171,69 +170,98 @@ int Ai::Ai_FCR(int &bet,int &gamepool,Machine &machine)
         //TO DO
         RR = hand_strength * (float ( gamepool)) / float(bet);
         RR_ = RR;
-        HS_ =hand_strength;
+        HS_ = hand_strength;
         std::cout<< " RR = "<<RR<<std::endl;
         int p = std::rand()%100;//随机生成0到100
-        if(RR < 0.6 )
+        std::cout<< " p = "<<p<<std::endl;
+        if(hand_strength <= 0.39)
         {
-            if (p >= 5)//这是一个大概率事件，如果回报率小于0.8，就fold
+            if(p>80)
             {
-                return 0;
-            } else//小概率 蒙人的；
-            {
-                return bet*2;
-            }
-        }
-        else if(RR>=0.6 && RR<1.0)//处于容易输钱的状态
-        {
-            if(p>=20)//大概率fold
+                return bet;
+            } else
             {
                 return 0;
             }
-            else if(p < 5)
-            {
-                return bet;
-            }
-            else
-            {
-                return 2*bet;
-            }
         }
-        else if (RR>=1.0 && RR<1.8)
+        else if(hand_strength >0.39 && hand_strength < 0.7)
         {
-            if(p > 30)
+            if(RR < 0.8 )//处于容易输钱的状态
             {
-                return bet;//跟
+                if (p >= 20)//这是一个大概率事件，如果回报率小于0.8，就fold
+                {
+                    return 0;
+                } else//小概率 蒙人的；
+                {
+                    return bet*2;
+                }
             }
-            else
+            if(RR>=0.8 && RR< 1 )//处于容易输钱的状态
             {
-                return 2*bet;
+                if (p >= 40)//这是一个大概率事件，如果回报率小于0.8，就fold
+                {
+                    return 0;
+                } else//小概率 蒙人的；
+                {
+                    return bet;
+                }
             }
-        }
-        else if (RR >= 1.8)
-        {
-            if(p > 70)
+            else if(RR>= 1 && RR<1.5)//处于容易赢钱的状态
             {
-                return bet;
+                if(p >= 30)//fold
+                {
+                    return 0;
+                }
+                else if(p < 5)
+                {
+                    return bet;
+                }
+                else
+                {
+                    return 2*bet;
+                }
             }
-            else
+            else if (RR>=1.5 && RR<1.8)// 不会fold
             {
-                return 2*bet;
+                if(p > 30)
+                {
+                    return bet;//跟
+                }
+                else
+                {
+                    return 2*bet;
+                }
             }
-        }
+            else if (RR >= 1.8)// 不会fold
+            {
+                if(p > 70)
+                {
+                    return bet;
+                }
+                else
+                {
+                    return 2*bet;
+                }
+            }
 
-        if(hand_strength > 0.7 && p >= 30)
+        }
+        else if(hand_strength > 0.7 )
         {
-            return 2*bet;
+            if(p>30)
+            {
+                return 2*bet;
+            } else
+            {
+                return 4*bet;
+            }
+
         }
 
     }
 
-
-
    //其他情况
     int p = std::rand()%100;//随机生成0到100
-    if(p > 70)
+   if(p > 30)
     {
         return bet;
     }

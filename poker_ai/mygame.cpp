@@ -98,7 +98,7 @@ int Mygame::ai_fcr(const Ai_input &ai_input)
         }
         else if(fcr >= ai_.bet_ && fcr < 2*ai_.bet_)//跟注
         {
-
+            fcrca = 1;
         }
         else if(fcr >= 2*ai_.bet_ && fcr < ai_.getChip())//加注
         {
@@ -131,7 +131,7 @@ int Mygame::ai_fcr(const Ai_input &ai_input)
             std::cout<<"电脑弃牌，玩家获胜"<<std::endl;
             fcrca = 0;
         }
-        else if(fcr >= ai_.bet_ && fcr < 2*ai_.bet_)//跟注
+        else if(fcr > 0 && fcr < 2*ai_.bet_)//跟注
         {
             std::cout<<"电脑跟注"<<std::endl;
             fcrca = 1;
@@ -146,6 +146,9 @@ int Mygame::ai_fcr(const Ai_input &ai_input)
             std::cout<<"来吧！ALL IN 我跟你拼了"<<std::endl;
             fcr = ai_.getChip();
             fcrca = 3;
+        } else
+        {
+            fcrca = 1;
         }
     }
 

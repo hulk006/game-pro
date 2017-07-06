@@ -20,7 +20,7 @@ int main()
 {
     //守护进程函数，用于保持程序一直运行，但是服务器上只能运行一次这个程序，否则会造成电脑卡顿
     //daemon(0,0);
-    init_daemon();
+    //init_daemon();
     int serv_sockfd;//服务器的socket，调用socket函数返回的文件描述符
     //创建套接字（socket）：在网络中用来描述计算机中不同程序与其他计算机程序的通信方式。
     if ((serv_sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
