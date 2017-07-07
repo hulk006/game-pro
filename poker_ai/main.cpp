@@ -73,6 +73,7 @@ int main()
 		memset(sendbuf, 0, sizeof(sendbuf));
                 memset(buf, 0, sizeof(buf));//清零
                 int recieve = recv(client_sockfd, buf, sizeof(buf), 0);
+std::cout<<buf<<std::endl;
                 if(strcmp(buf,"")==0)
                 {
                     close(client_sockfd);
