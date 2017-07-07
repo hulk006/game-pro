@@ -9,7 +9,7 @@ Ai::Ai()
     game_pool_ = 0;
     chip_ = 5000;//ai 初始的本金
     com_size_ = 0;//初始化时时候没有公牌手牌
-    simuate_num_ = 10;
+    simuate_num_ = 20;
     com_cards_.cards_.clear();
     hole_com_cards_.cards_.clear();
     hole_cards_.cards_.clear();
@@ -133,6 +133,8 @@ int Ai::Ai_FCR(int &bet,int &gamepool,Machine &machine)
     float hand_strength = getStrength(machine);
     std::cout<<"hand_strength ="<<hand_strength<<std::endl;
     HS_ =hand_strength;
+    float hs_small = 0.34;
+    float hs_big = 0.65;
     //特殊情况 ，如果剩余筹码很少，并且手牌较小，就丢掉牌
     if (chip_ - bet < 400 && hand_strength < 0.4)
     {
@@ -146,34 +148,48 @@ int Ai::Ai_FCR(int &bet,int &gamepool,Machine &machine)
         return chip_;//all in
     }
 
-    //第一轮
-    if(bet == 0)
+    //第一轮 TO DO
+    if(bet == 0 || gamepool == 3*10 ||gamepool == 3*50||gamepool == 3*100||gamepool == 3*200 )
     {
-        if(hand_strength < 0.3)
+        if(hand_strength < 0.2)
         {
             return  0;
         }
         else
         {
-            RR = 1.3;
-            RR -= hand_strength;
-            RR_ = RR;
-            int this_bet = float(hand_strength)*gamepool/float(RR);
-            return this_bet;
+            if(bet > 5*gamepool)
+            {
+                std::cout<<" 111"<<std::endl;
+                if(hand_strength > (0.5))
+                {
+                    std::cout<<" 111"<<std::endl;
+                    return bet;
+                } else
+                {
+                    return 0;
+                }
+            }
+            else
+            {
+                std::cout<<" 111"<<std::endl;
+                RR = 1.3;
+                RR -= hand_strength;
+                RR_ = RR;
+                int this_bet = float(hand_strength)*gamepool/float(RR);
+                return this_bet;
+            }
         }
-
     }
     //不是第一轮
     else
     {
         //首先计算回报率
         //TO DO
-        float hs_small = 0.34;
-        float hs_big = 0.65;
         RR = hand_strength * (float ( gamepool)) / float(bet);
         RR_ = RR;
         HS_ = hand_strength;
         std::cout<< " RR = "<<RR<<std::endl;
+        srand((int)time(NULL));
         int p = std::rand()%100;//随机生成0到100
         std::cout<< " p = "<<p<<std::endl;
         if(hand_strength <= hs_small)
@@ -188,9 +204,9 @@ int Ai::Ai_FCR(int &bet,int &gamepool,Machine &machine)
         }
        else if(hand_strength > hs_small && hand_strength < hs_big)
         {
-            if(RR < 0.8 )//处于容易输钱的状态
+            if(RR < 0.7 )//处于容易输钱的状态
             {
-                if (p >= 30)//这是一个大概率事件，如果回报率小于0.8，就fold
+                if (p >= 40)//这是一个大概率事件，如果回报率小于0.8，就fold
                 {
                     return 0;
                 } else//小概率 蒙人的；
@@ -198,9 +214,9 @@ int Ai::Ai_FCR(int &bet,int &gamepool,Machine &machine)
                     return bet*2;
                 }
             }
-            if(RR>=0.8 && RR< 1 )//处于容易输钱的状态
+            if(RR>=0.7 && RR< 1 )//处于容易输钱的状态
             {
-                if (p >= 50)//这是一个大概率事件，如果回报率小于0.8，就fold
+                if (p > 95)//这是一个大概率事件，如果回报率小于0.8，就fold
                 {
                     return 0;
                 } else//小概率 蒙人的；
