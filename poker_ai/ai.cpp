@@ -135,17 +135,20 @@ int Ai::Ai_FCR(int &bet,int &gamepool,Machine &machine)
     HS_ =hand_strength;
     float hs_small = 0.34;
     float hs_big = 0.65;
+    int final_bet = bet;
     //特殊情况 ，如果剩余筹码很少，并且手牌较小，就丢掉牌
-    if (chip_ - bet < 400 && hand_strength < 0.4)
+    if (chip_ - bet < 400 && hand_strength < hs_small)
     {
         RR_ = 0.1;
-        return 0;//fold
+        final_bet = 0;
+        return final_bet;//fold
     }
     //特殊情况 很大的几率获胜
-    if(hand_strength >= 0.9)
+    if(hand_strength >= 0.8)
     {
         RR_ = 10;
-        return chip_;//all in
+        final_bet = chip_;
+        return final_bet;//all in
     }
 
     //第一轮 TO DO
@@ -153,20 +156,21 @@ int Ai::Ai_FCR(int &bet,int &gamepool,Machine &machine)
     {
         if(hand_strength < 0.2)
         {
-            return  0;
+            final_bet = 0;
+            return final_bet;//fold
         }
         else
         {
             if(bet > 5*gamepool)
             {
-                std::cout<<" 111"<<std::endl;
                 if(hand_strength > (0.5))
                 {
-                    std::cout<<" 111"<<std::endl;
-                    return bet;
+                    final_bet = bet;
+                    return final_bet;
                 } else
                 {
-                    return 0;
+                    final_bet = 0;
+                    return final_bet;//fold
                 }
             }
             else
@@ -175,8 +179,8 @@ int Ai::Ai_FCR(int &bet,int &gamepool,Machine &machine)
                 RR = 1.3;
                 RR -= hand_strength;
                 RR_ = RR;
-                int this_bet = float(hand_strength)*gamepool/float(RR);
-                return this_bet;
+                final_bet = float(hand_strength)*gamepool/float(RR);
+                return final_bet;
             }
         }
     }
@@ -194,71 +198,84 @@ int Ai::Ai_FCR(int &bet,int &gamepool,Machine &machine)
         std::cout<< " p = "<<p<<std::endl;
         if(hand_strength <= hs_small)
         {
-            if(p>80)
+            if(p>70)//
             {
-                return bet;
-            } else
+                final_bet =bet;
+                return final_bet;
+            } else//这是一个大概率事件，如果回报率小于hs_small，就fold
             {
-                return 0;
+                final_bet = 0;
+                return final_bet;//fold
             }
         }
        else if(hand_strength > hs_small && hand_strength < hs_big)
         {
             if(RR < 0.7 )//处于容易输钱的状态
             {
-                if (p >= 40)//这是一个大概率事件，如果回报率小于0.8，就fold
+                if (p >= 70)//if (p >= 30)这是一个大概率事件，如果回报率小于0.8，就fold.本来是30改成70为了减少ai丢牌的概率
                 {
-                    return 0;
+                    final_bet = 0;
+                    return final_bet;//fold
                 } else//小概率 蒙人的；
                 {
-                    return bet*2;
+                    final_bet = bet*2;
+                    return final_bet;
                 }
             }
             if(RR>=0.7 && RR< 1 )//处于容易输钱的状态
             {
                 if (p > 95)//这是一个大概率事件，如果回报率小于0.8，就fold
                 {
-                    return 0;
+                    final_bet = 0;
+                    return final_bet;//fold
                 } else//小概率 蒙人的；
                 {
-                    return bet;
+                    final_bet = bet;
+                    return final_bet;//call
                 }
             }
             else if(RR>= 1 && RR<1.5)//处于容易赢钱的状态
             {
-                if(p >= 95)//fold
+                if(p >= 99)//很小的概率fold
                 {
-                    return 0;
+                    final_bet = 0;
+                    return final_bet;//fold
                 }
                 else if(p < 60)
                 {
-                    return bet;
+                    final_bet = bet;
+                    return final_bet;//call
                 }
                 else
                 {
-                    return 2*bet;
+                    final_bet = 2*bet;
+                    return final_bet;//raise
                 }
             }
             else if (RR>=1.5 && RR<1.8)// 不会fold
             {
                 if(p > 50)
                 {
-                    return bet;//跟
+                    final_bet = bet;
+                    return final_bet;//call
                 }
                 else
                 {
-                    return 2*bet;
+                    final_bet = 2*bet;
+                    return final_bet;//raise
                 }
             }
             else if (RR >= 1.8)// 不会fold
             {
                 if(p > 70)
                 {
-                    return bet;
+                    final_bet = bet;
+                    return final_bet;//call
                 }
                 else
                 {
-                    return 2*bet;
+                    final_bet = 2*bet;
+                    return final_bet;//raise
                 }
             }
 
@@ -267,26 +284,20 @@ int Ai::Ai_FCR(int &bet,int &gamepool,Machine &machine)
         {
             if(p>40)
             {
-                return 2*bet;
-            } else
+                final_bet = 2*bet;
+                return final_bet;//raise
+            }
+            else
             {
-                return 4*bet;
+                final_bet = 4*bet;
+                return final_bet;//raise
             }
 
         }
 
     }
 
-   //其他情况
-    int p = std::rand()%100;//随机生成0到100
-   if(p > 30)
-    {
-        return bet;
-    }
-    else
-    {
-        return 0;
-    }
+    return final_bet;
 
 }
 

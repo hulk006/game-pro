@@ -39,7 +39,7 @@ int main() {
             exit(EXIT_FAILURE);
         }
 
-        char ai_input[] = "poker_info;111111;hole,8C,6C;com_card,;current_bet,1000; game_pool_,150;chip,4000;check_,0;connect,0;send_end;";
+        char ai_input[] = "poker_info;111111;hole,2H,6C;com_card,;current_bet,1000; game_pool_,150;chip,4000;check_,0;connect,0;send_end;";
         //char ai_input[] = "";
         //fgets(ai_input, sizeof(ai_input), stdin);
         strcpy( sendbuf, ai_input);
