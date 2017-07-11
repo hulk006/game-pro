@@ -94,16 +94,16 @@ int Mygame::ai_fcr(const Ai_input &ai_input)
         if(fcr == 0)//电脑fold
         {
             std::cout<<"电脑弃牌，玩家获胜"<<std::endl;
-            fcrca = 4;
+            fcrca = 0;
         }
-        else if(fcr >= ai_.bet_ && fcr < 2*ai_.bet_)//跟注
+        else if(fcr > 0 && fcr < 2*ai_.bet_)//跟注
         {
-            fcrca = 1;
+            fcrca = 2;
         }
-        else if(fcr >= 2*ai_.bet_ && fcr < ai_.getChip())//加注
+        else if(fcr >= 2*ai_.bet_ && fcr < ai_.getChip())//加注或者all in
         {
             int p = rand()%100;//随机生成0到100
-            if (p>50)
+            if (p>70)
             {
                 fcrca = 4;
             } else
@@ -116,11 +116,11 @@ int Mygame::ai_fcr(const Ai_input &ai_input)
         {
             std::cout<<"来吧！ALL IN 我跟你拼了"<<std::endl;
             fcr = ai_.getChip();
-            fcrca = 3;
-        }
-        else //让牌
-        {
             fcrca = 4;
+        }
+        else //raise
+        {
+            fcrca = 2;
         }
 
     }
@@ -145,7 +145,7 @@ int Mygame::ai_fcr(const Ai_input &ai_input)
         {
             std::cout<<"来吧！ALL IN 我跟你拼了"<<std::endl;
             fcr = ai_.getChip();
-            fcrca = 3;
+            fcrca = 4;
         } else
         {
             fcrca = 1;
