@@ -83,8 +83,6 @@ int Mygame::ai_fcr(const Ai_input &ai_input)
     int fcrca = 0;
     int fcr = 0;
 
-    machine_.init();
-    machine_.shuffleCards();
 
     fcr = ai_.Ai_FCR(ai_.bet_,ai_.game_pool_,machine_);//得到一个电脑的下注数
 

@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <vector>
 #include "ctime"
+#include <sys/timeb.h>
 
 Machine::Machine()
 {
@@ -19,7 +20,7 @@ Machine::~Machine() {}
 对于花色：0代表黑桃、1代表红桃、2代表梅花、3代表方块
 对于值：0代表two，1代表three ... 12代表A
 */
-void Machine::init()
+void Machine::init(const Cards hole_com_cards)
 {
     cards_.cards_.clear();
     for (int i = 0; i < SUIT_SIZE; ++i)
@@ -34,6 +35,7 @@ void Machine::init()
         }
     }
     size_t len = cards_.cards_.size();
+    know_cards_ = hole_com_cards;
     top_index_ = 0;
     initilized_ = true;
 }
@@ -54,14 +56,21 @@ void Machine::shuffleCards()
     }
     else
     {
+        int len = cards_.cards_.size();
+        removeKonwnCards();//把目前已知的牌删除
+        int len1 = cards_.cards_.size();
+
+        int konwn_cards_num = know_cards_.cards_.size();
        // 要取得[a,b]的随机整数，使用(rand() % (b-a+1))+ a （结果值含a和b）
-        int  card_num = SUIT_SIZE*CARD_RANK;
+        int  card_num = SUIT_SIZE*CARD_RANK -konwn_cards_num;
         int  rand_int = 0;
         for (int i = card_num - 1; i > 0 ; i--)
         {
-            i;
-            srand(unsigned(time(0)));
-            rand_int = rand()%i;//[0 - 51]
+            //struct timeb timeSeed;
+            //ftime(&timeSeed);
+            //double time = timeSeed.time * 1000 + timeSeed.millitm;
+            // srand(timeSeed.time * 1000 + timeSeed.millitm);  // milli time
+            rand_int = rand()%i;//[0 - 51-konwn_cards_num]
             swapCard(i,rand_int);
         }
         top_index_ = 0;
@@ -89,9 +98,44 @@ void Machine::swapCard(int i, int j)
     cards_.cards_[i] = cards_.cards_[j];
     cards_.cards_[j] = temp;
 }
-void Machine::showCards() {
+void Machine::showCards()
+{
     for (int i = 0; i < SUIT_SIZE*CARD_RANK ; ++i)
     {
         std::cout <<SUIT_NAME[cards_.cards_[i].suit_]<<" " << cards_.cards_[i].value_<<std::endl;
     }
+}
+void Machine::removeKonwnCards()//用于计算胜率的时候，把已知的牌移除，使得胜率计算更加准确
+{
+    if(know_cards_.cards_.size()>7)
+    {
+        std::cout<<"error occurs,int the removeKonwnCards() "<<std::endl;
+    }
+    std::vector<Card>::iterator it ;
+
+    for(int i = 0;i< know_cards_.cards_.size(); ++i)
+    {
+        int known_card_rank = convertCardToNum(know_cards_.cards_[i]);
+        it = cards_.cards_.begin();
+        while (it != cards_.cards_.end())
+        {
+            int cards_rank = convertCardToNum( *it );
+            if(cards_rank == known_card_rank)
+            {
+                cards_.cards_.erase(it);
+                it++;
+                break;
+            } else
+            {
+                it++;
+            }
+
+        }
+    }
+}
+
+int  Machine::convertCardToNum(const Card c)
+{
+    int card_rank = c.suit_ * 13 + c.value_;
+    return card_rank;
 }

@@ -43,7 +43,7 @@ public:
     //下注分析 fold call raise
     int Ai_FCR(int &bet,int &gamepool,Machine &machine);
     float getStrength(Machine &machine);
-    int simulate(Machine &machine , int simuate_num);
+    bool simulate(Machine &machine );
     //分析手牌
     void dealover();
 //some get  value func
