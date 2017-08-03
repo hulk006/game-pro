@@ -82,74 +82,136 @@ int Mygame::ai_fcr(const Ai_input &ai_input)
     ai_.check_ = ai_input.check_;
     int fcrca = 0;
     int fcr = 0;
-
-
     fcr = ai_.Ai_FCR(ai_.bet_,ai_.game_pool_,machine_);//得到一个电脑的下注数
+    float allin_threhold = 0.84;//经验值，
 
-    if(ai_.check_ == true) //可以让牌
+    if(ai_.com_cards_.cards_.size() < 1||ai_.hole_com_cards_.cards_.size() == 2 )//pre flop没有工牌 只有看牌和跟住操作
     {
+        if(ai_.check_ == true) //可以让牌
+        {
 
-        if(fcr == 0)//电脑fold
-        {
-            std::cout<<"电脑弃牌，玩家获胜"<<std::endl;
-            fcrca = 0;
-        }
-        else if(fcr > 0 && fcr < 2*ai_.bet_)//跟注
-        {
-            fcrca = 2;
-        }
-        else if(fcr >= 2*ai_.bet_ && fcr < ai_.getChip())//加注或者all in
-        {
-            int p = rand()%100;//随机生成0到100
-            if (p>70)
+            if(fcr >= 0 && fcr < ai_.bet_)//电脑fold
             {
-                fcrca = 4;
-            } else
+                fcrca = 3;
+            }
+            else //跟住
             {
-                fcrca = 2;
+                fcrca = 1;
+            }
+        }
+        else//不可以看牌
+        {
+            if(fcr == 0)//电脑fold
+            {
+                fcrca = 0;
+            }
+            else //跟注
+            {
+                if(ai_.HS_ > allin_threhold)
+                {
+                    int p = rand()%100;//随机生成0到100
+                    if (p > 60)//allin 的几率 10%
+                    {
+                        fcrca = 4;
+                    }
+                    else
+                    {
+                        fcrca = 1;
+                    }
+                }
+            }
+        }
+    }
+    else//有公牌的阶段，正常进行
+    {
+        if(ai_.check_ == true) //可以让牌
+        {
+            if(fcr == 0)//电脑本来fold，但是可以看牌啊
+            {
+                fcrca = 3;//看牌
+            }
+            else if(fcr > 0 && fcr < 2*ai_.bet_)//跟注
+            {
+                fcrca = 1;
+            }
+            else if(fcr >= 2*ai_.bet_ && fcr < ai_.getChip())//加注或者all in
+            {
+                int p = rand()%100;//随机生成0到100
+                if (p>95)//allin 的几率 10%
+                {
+                    fcrca = 4;
+                } else
+                {
+                    fcrca = 2;
+                }
+            }
+            else if(fcr >= ai_.getChip())//电脑all in
+            {
+                if( ai_.HS_ > allin_threhold)
+                {
+                    fcr = ai_.getChip();
+                    int p = rand()%100;//随机生成0到100
+                    if (p > 40)//allin 的几率 10%
+                    {
+                        fcrca = 4;
+                    }
+                    else
+                    {
+                        fcrca = 2;
+                    }
+                } else
+                {
+                    fcrca =  2;//raise
+                }
+            }
+            else //默认看牌
+            {
+                fcrca = 3;//check
             }
 
         }
-        else if(fcr >= ai_.getChip())//电脑all in
+        else//不能让牌的情况
         {
-            std::cout<<"来吧！ALL IN 我跟你拼了"<<std::endl;
-            fcr = ai_.getChip();
-            fcrca = 4;
+            if(fcr == 0)//fold
+            {
+                fcrca = 0;
+            }
+            else if(fcr > 0 && fcr < 2*ai_.bet_)//跟注
+            {
+                std::cout<<"电脑跟注"<<std::endl;
+                fcrca = 1;
+            }
+            else if(fcr >= 2*ai_.bet_ && fcr < ai_.getChip())//加注
+            {
+                std::cout<<"电脑加注"<<std::endl;
+                fcrca =  2;
+            }
+            else if(fcr >= ai_.getChip())//电脑all in
+            {
+                if( ai_.HS_ > allin_threhold) //胜率很大
+                {
+                    fcr = ai_.getChip();
+                    int p = rand()%100;//随机生成0到100
+                    if (p > 40)//allin 的几率 10%
+                    {
+                        fcrca = 4;
+                    }
+                    else
+                    {
+                        fcrca = 2;
+                    }
+                }
+                else
+                {
+                    fcrca =  2;//raise
+                }
+            }
+            else//默认跟注
+            {
+                fcrca = 1;
+            }
         }
-        else //raise
-        {
-            fcrca = 2;
-        }
-
     }
-    else
-    {
-        if(fcr == 0)//电脑fold
-        {
-            std::cout<<"电脑弃牌，玩家获胜"<<std::endl;
-            fcrca = 0;
-        }
-        else if(fcr > 0 && fcr < 2*ai_.bet_)//跟注
-        {
-            std::cout<<"电脑跟注"<<std::endl;
-            fcrca = 1;
-        }
-        else if(fcr >= 2*ai_.bet_ && fcr < ai_.getChip())//加注
-        {
-            std::cout<<"电脑加注"<<std::endl;
-            fcrca =  2;
-        }
-        else if(fcr >= ai_.getChip())//电脑all in
-        {
-            std::cout<<"来吧！ALL IN 我跟你拼了"<<std::endl;
-            fcr = ai_.getChip();
-            fcrca = 4;
-        } else
-        {
-            fcrca = 1;
-        }
-    }
-
     ai_out_.fcr_bet_ = fcr;
     ai_out_.fcrca_ = fcrca;
     ai_out_.RR_ =ai_.RR_;
