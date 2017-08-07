@@ -35,7 +35,8 @@ int main()
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(PORT);
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-
+    int  optval=1;
+    setsockopt(serv_sockfd,SOL_SOCKET,SO_REUSEADDR,(char*)&optval,sizeof(optval));
     //命名socket, 我们知道， 绑定"协议， ip地址,  端口号"这三个要素， 而命名就是通过调用bind函数把socket与这三个要素绑定一起来。
     if (bind(serv_sockfd, (struct sockaddr *) (&server_addr), sizeof(struct sockaddr)) < 0) {
         fprintf(stderr, "bind failed \n");
@@ -70,10 +71,10 @@ int main()
             {
                 char sendbuf[MAXSIZE];//处理结果的字符串
                 char buf[MAXSIZE];//接受牌局信息的字符串
-		memset(sendbuf, 0, sizeof(sendbuf));
+		        memset(sendbuf, 0, sizeof(sendbuf));
                 memset(buf, 0, sizeof(buf));//清零
                 int recieve = recv(client_sockfd, buf, sizeof(buf), 0);
-std::cout<<buf<<std::endl;
+                std::cout<<buf<<std::endl;
                 if(strcmp(buf,"")==0)
                 {
                     close(client_sockfd);
@@ -81,55 +82,72 @@ std::cout<<buf<<std::endl;
                 }
                 char *first = "p";
                 //如果接收到信息，才继续执行
-                if(buf[0] == *first)
-                {
+                if(buf[0] == *first) {
                     Mygame start;//进行模拟的游戏的类
                     std::string buf_string = buf;
                     std::vector<std::string> buf_split;
                     buf_split.clear();
                     char *split = ";";
                     start.splitString(buf_string, ";", buf_split);//安照固定格式对字符串进行分段
-                    std::vector<std::string> connect_str;
-                    start.splitString(buf_split[8], ",", connect_str);
-                    int connect_flag = std::stoi(connect_str[1]);//long or short connecting;
-                    //如果标志为正确才能够执行ai的决策，否则重新开始
-                    if (buf_split[0] == "poker_info") {
-                        //通信的交互位
-                        std::cout << "收到一个请求，游戏id为" << buf_split[1] << std::endl;
-                        Ai_input ai_input;
-                        start.setAiInput(ai_input, buf_split);
-                        start.ai_fcr(ai_input);
-                        int fcr = start.ai_out_.fcr_bet_;
-                        std::cout << "理论上下注" << fcr << std::endl;
-                        std::stringstream ss;
-                        ss << "poker_fcr;" << buf_split[1] << ";" << start.ai_out_.fcrca_ << ";" << "send_end;";
-                        strcpy(sendbuf, ss.str().c_str());
-                        send(client_sockfd, sendbuf, strlen(sendbuf), 0);
-                        std::cout << "sendbuf2=" << sendbuf << std::endl;
-                        memset(sendbuf, 0, sizeof(sendbuf));
-                        memset(buf, 0, sizeof(buf));//清零
-                        if(connect_flag == 0)
+                    //检测请求消息的格式
+                    if (buf_split.size()== 10 && buf_split[1] != ""
+                        && buf_split[2].find_first_of("hole,") != std::string::npos
+                        && buf_split[3].find_first_of("com_card") != std::string::npos
+                        && buf_split[4].find_first_of("current_bet,") != std::string::npos
+                        && buf_split[5].find_first_of("game_pool_,") != std::string::npos
+                        && buf_split[6].find_first_of("chip,") != std::string::npos
+                        && buf_split[7].find_first_of("check_,") != std::string::npos
+                        && buf_split[8].find_first_of("connect,") != std::string::npos)
+                    {
+                        std::vector<std::string> connect_str;
+                        start.splitString(buf_split[8], ",", connect_str);
+                        int connect_flag = std::stoi(connect_str[1]);//long or short connecting;
+                        //如果标志为正确才能够执行ai的决策，否则重新开始
+                        if (buf_split[0] == "poker_info")
                         {
-                            //sleep(2);
-                            close(client_sockfd);
+                            //通信的交互位
+                            std::cout << "收到一个请求，游戏id为" << buf_split[1] << std::endl;
+                            Ai_input ai_input;
+                            start.setAiInput(ai_input, buf_split);
+                            start.ai_fcr(ai_input);
+                            int fcr = start.ai_out_.fcr_bet_;
+                            std::cout << "理论上下注" << fcr << std::endl;
+                            std::stringstream ss;
+                            ss << "poker_fcr;" << buf_split[1] << ";" << start.ai_out_.fcrca_ << ";" << "send_end;";
+                            strcpy(sendbuf, ss.str().c_str());
+                            send(client_sockfd, sendbuf, strlen(sendbuf), 0);
+                            std::cout << "sendbuf2=" << sendbuf << std::endl;
+                            memset(sendbuf, 0, sizeof(sendbuf));
+                            memset(buf, 0, sizeof(buf));//清零
+                            if (connect_flag == 0)
+                            {
+                                close(client_sockfd);
+                            }
+                            continue;
                         }
-                        continue;
-                    }
-		 else {
+                        else
+                        {
+                            strcpy(sendbuf, "error");
+                            send(client_sockfd, sendbuf, strlen(sendbuf), 0);
+                            std::cout << "waiting a buf1" << std::endl;
+                            close(client_sockfd);
+                            continue;
+                        }
+
+                    } else {
+                        std::cout << "wrong msg type" << std::endl;
                         strcpy(sendbuf, "error");
                         send(client_sockfd, sendbuf, strlen(sendbuf), 0);
-                        std::cout << "waiting a buf1" << std::endl;
-
+                        std::cout << "waiting a buf2" << std::endl;
                         close(client_sockfd);
-                        //sleep(1);
                         continue;
                     }
                 }
-                else
+                else//请求消息为空
                 {
                     strcpy(sendbuf, "error");
                     send(client_sockfd, sendbuf, strlen(sendbuf), 0);
-                    std::cout << "waiting a buf2" << std::endl;
+                    std::cout << "waiting a buf3" << std::endl;
                     close(client_sockfd);
                     continue;
                 }

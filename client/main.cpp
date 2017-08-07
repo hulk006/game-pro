@@ -44,7 +44,7 @@ int main(int argc ,char **argv )
     char *ai_input;
     if(argc == 1)
     {
-        ai_input =  "poker_info;111111;hole,2H,6C;com_card,;current_bet,100; game_pool_,180;chip,4000;check_,0;connect,0;send_end;";
+        ai_input =  "poker_info;11;hole,2H,6C;com_card,;current_bet,100; game_pool_,180;chip,4000;check_,0;connect,0;send_end;";
     }
     else if(argc == 2)
     {

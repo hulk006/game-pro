@@ -16,6 +16,6 @@ set(SOURCE_FILES
         main.cpp
         mygame.cpp
         mygame.h
-        )
+        config.h)
 
 add_executable(poker_ai ${SOURCE_FILES})
