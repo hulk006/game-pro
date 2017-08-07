@@ -119,6 +119,9 @@ int Mygame::ai_fcr(const Ai_input &ai_input)
                         fcrca = 1;
                     }
                 }
+		else
+		{fcrca = 1;
+		}
             }
         }
     }
