@@ -10,29 +10,15 @@ Mygame::Mygame()
 Mygame::~Mygame() {}
 
 
-void Mygame::setAiInput(Ai_input &ai_input,std::vector<std::string> &buf_string)
+void Mygame::setAiInput(Ai_input &ai_input,const std::vector<std::string> &buf_string,ConfigTCP &configTCP)
 {
     int start = 2;
-    Card C[7];
-    //hole
-    std::vector<std::string> hole_string;
-    splitString(buf_string[start],",",hole_string);
-    C[0]=changeCardType(hole_string[1]);
-    C[1]=changeCardType(hole_string[2]);
-
-
     ai_input.hole_cards_.cards_.clear();
-    ai_input.hole_cards_.cards_.push_back(C[0]);
-    ai_input.hole_cards_.cards_.push_back(C[1]);
+    ai_input.hole_cards_ = configTCP.ai_input_.hole_cards_;
 
-    //com
-    std::vector<std::string> com_string;
-    splitString(buf_string[start+1],",",com_string);
     ai_input.com_cards_.cards_.clear();
-    for (int i = 1; i <com_string.size(); ++i) {
-        C[i+1]=changeCardType(com_string[i]);
-        ai_input.com_cards_.cards_.push_back(C[i+1]);
-    }
+    ai_input.com_cards_ = configTCP.ai_input_.com_cards_;
+
 
     //bet
     std::vector<std::string> bet_string;
@@ -224,27 +210,12 @@ int Mygame::ai_fcr(const Ai_input &ai_input)
     ai_out_.strength_hand_ = ai_.HS_;
     return fcrca;
 }
-void Mygame::splitString(std::string &input,char *split,std::vector<std::string> &output)
-{
-    output.clear();
-    std::vector<std::string> input_split;
-    const char *temp= input.c_str();
-    char *tmpStr = strtok((char *) temp, split);
-    while(tmpStr!=NULL)
-    {
-        input_split.push_back(std::string(tmpStr));
-        tmpStr = strtok(NULL, split);
-        int a = input_split.size();
-    }
 
 
-    output=input_split;
-
-}
-
-Card  Mygame::changeCardType(std::string &card_string)
+Card  Mygame::changeCardType(std::string &card_string,ConfigTCP &configTCP)
 {
     Card C;
+    std::cout<<card_string<<std::endl;
     char value_raw = card_string[0];//
     char suit_raw = card_string[1];//
     switch ((int)value_raw)
@@ -268,6 +239,14 @@ Card  Mygame::changeCardType(std::string &card_string)
             C.value_ = (int)(card_string[0])- 50;
             break;
     }
+
+    if( C.value_<0 ||  C.value_ > 12)
+    {
+        std::cout<<"error input card value (2 ~ TJQKA)!!!!!!"<<std::endl;
+        configTCP.errorSend();
+        exit(0);//退出重启
+    }
+
     switch ((int)suit_raw)
     {
         case 68://D
@@ -283,11 +262,12 @@ Card  Mygame::changeCardType(std::string &card_string)
             C.suit_ = 0;
             break;
         default:
-        std::cout<<"error in suit type change!!!!!!"<<std::endl;
+            std::cout<<"error in suit type change!!!!!!"<<std::endl;
+            configTCP.errorSend();
+            exit(0);//退出重启
             break;
     }
     return C;
-
-
-
 }
+
+

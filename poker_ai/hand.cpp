@@ -86,11 +86,6 @@ void Hand::ananlyzeCard(const Card &c)
     //}
 
     count_[c.value_]++;
-    for(int i = 0;i < hand_size_;++i)
-    {
-        hole_com_cards_.cards_[i].show_time_ = count_[hole_com_cards_.cards_[i].value_];
-    }
-
 }
 
 void Hand::ananlyzeHand()
@@ -186,7 +181,7 @@ void Hand::ananlyzeHand()
     {
         if(count_[i] == 3)
         {
-            for (int j = 0; j <CARD_RANK, j!=i ; ++j)
+            for (int j = 0; j <CARD_RANK; ++j)
             {
                 if(count_[j] == 2)
                 {

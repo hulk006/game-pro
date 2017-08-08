@@ -4,6 +4,7 @@ project(poker_ai)
 set(CMAKE_CXX_STANDARD 11)
 
 set(SOURCE_FILES
+        tools.h
         ai.cpp
         ai.h
         card.cpp
@@ -16,6 +17,7 @@ set(SOURCE_FILES
         main.cpp
         mygame.cpp
         mygame.h
-        config.h)
+        config.h
+        config.cpp tools.cpp)
 
 add_executable(poker_ai ${SOURCE_FILES})

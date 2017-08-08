@@ -18,7 +18,6 @@ struct Card
 {
     int suit_;//程序统一标准：0是黑桃、1是红桃、2是梅花、3是方片
     int value_;//0代表‘牌2’、1代表‘牌3’...more
-    int show_time_ ;//发牌的顺序，用来排序sort
 };
 class Cards
 {

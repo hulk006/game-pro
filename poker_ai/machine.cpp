@@ -30,7 +30,6 @@ void Machine::init(const Cards hole_com_cards)
             Card c;
             c.value_ = j;
             c.suit_ = i;
-            c.show_time_ = 0;
             cards_.cards_.push_back(c);
         }
     }

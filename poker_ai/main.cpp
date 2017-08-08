@@ -10,6 +10,7 @@
 #include "card.h"
 #include "mygame.h"
 #include <sstream>
+#include "config.h"
 #include "daemon.h"
 //××××××××××××××××××××××××××××××××××××××××××××××××××××××××
 //这是服务器的监听端口，所有客户端的buf必须通过此端口发送才能被监听到
@@ -18,143 +19,50 @@
 
 int main()
 {
-    //守护进程函数，用于保持程序一直运行，但是服务器上只能运行一次这个程序，否则会造成电脑卡顿
-    //daemon(0,0);
-    //init_daemon();
-    int serv_sockfd;//服务器的socket，调用socket函数返回的文件描述符
-    //创建套接字（socket）：在网络中用来描述计算机中不同程序与其他计算机程序的通信方式。
-    if ((serv_sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        fprintf(stderr, "create socket failed\n");
-        exit(EXIT_FAILURE);
-    }
-    puts("create socket success");
-    //定义服务端套接口数据结构
-    struct sockaddr_in server_addr;//服务
-    struct sockaddr_in client_addr;//客户
-    bzero(&server_addr, sizeof(struct sockaddr_in));
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(PORT);
-    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    int  optval=1;
-    setsockopt(serv_sockfd,SOL_SOCKET,SO_REUSEADDR,(char*)&optval,sizeof(optval));
-    //命名socket, 我们知道， 绑定"协议， ip地址,  端口号"这三个要素， 而命名就是通过调用bind函数把socket与这三个要素绑定一起来。
-    if (bind(serv_sockfd, (struct sockaddr *) (&server_addr), sizeof(struct sockaddr)) < 0) {
-        fprintf(stderr, "bind failed \n");
-        exit(EXIT_FAILURE);
-    }
-    puts("bind success\n");
-    //如果听成功
-    if (listen(serv_sockfd, 10) < 0) {
-        fprintf(stderr, "listen failed \n");
-        perror("listen fail\n");;
-        exit(EXIT_FAILURE);
-    }
-    puts("listen success,waiting a buf info!");
-
-    //服务器一直初一监听状态，不会关闭。
-    while (1) {
-           int  client_sockfd;
-           socklen_t sin_size = sizeof(struct sockaddr_in);
-           client_sockfd = accept(serv_sockfd, (struct sockaddr *) (&client_addr), &sin_size);
-           if ( client_sockfd < 0)
-           {
-               fprintf(stderr, "accept failed \n");
-               close(client_sockfd);
-               continue;
-
-           }
-           printf("accepted a new connetction\n");
-           printf("new socket id is %d\n", client_sockfd);
-           printf("Accept clent ip is %s\n", inet_ntoa(client_addr.sin_addr));
-           printf("Connect successful please input message\n");
-            while(1)
+    ConfigTCP configTCP;
+    configTCP.connection();//建立链接绑定端口，并且允许地址复用
+    while (1)
+    {
+        if (configTCP.acceptRecv() == true)//接受成工才能进行
+        {
+            while (1)
             {
-                char sendbuf[MAXSIZE];//处理结果的字符串
-                char buf[MAXSIZE];//接受牌局信息的字符串
-		        memset(sendbuf, 0, sizeof(sendbuf));
-                memset(buf, 0, sizeof(buf));//清零
-                int recieve = recv(client_sockfd, buf, sizeof(buf), 0);
-                std::cout<<buf<<std::endl;
-                if(strcmp(buf,"")==0)
+                if (configTCP.recvMsg() == true)//通过格式检测，才能进行否则报错
                 {
-                    close(client_sockfd);
+
+                    Mygame start;//进行模拟的游戏的类
+                    Ai_input ai_input;
+                    std::string hole = configTCP.buf_split_[2];
+                    start.setAiInput(ai_input, configTCP.buf_split_,configTCP);
+                    start.ai_fcr(ai_input);
+                    int fcr = start.ai_out_.fcr_bet_;
+                    std::cout << "理论上下注" << fcr << std::endl;
+                    std::stringstream ss;
+                    ss << "poker_fcr;" << configTCP.buf_split_[1] << ";" << start.ai_out_.fcrca_ << ";" << "send_end;";
+                    strcpy(configTCP.sendbuf_, ss.str().c_str());
+                    send(configTCP.client_sockfd_, configTCP.sendbuf_, strlen(configTCP.sendbuf_), 0);
+                    std::cout << "sendbuf2=" << configTCP.sendbuf_ << std::endl;
+                    memset(configTCP.sendbuf_, 0, sizeof(configTCP.sendbuf_));
+                    memset(configTCP.buf_, 0, sizeof(configTCP.buf_));//清零
+                    if (configTCP.connect_flag_ == 0) //短连接
+                    {
+                        close(configTCP.client_sockfd_);
+                    }
                     break;
                 }
-                char *first = "p";
-                //如果接收到信息，才继续执行
-                if(buf[0] == *first) {
-                    Mygame start;//进行模拟的游戏的类
-                    std::string buf_string = buf;
-                    std::vector<std::string> buf_split;
-                    buf_split.clear();
-                    char *split = ";";
-                    start.splitString(buf_string, ";", buf_split);//安照固定格式对字符串进行分段
-                    //检测请求消息的格式
-                    if (buf_split.size()== 10 && buf_split[1] != ""
-                        && buf_split[2].find_first_of("hole,") != std::string::npos
-                        && buf_split[3].find_first_of("com_card") != std::string::npos
-                        && buf_split[4].find_first_of("current_bet,") != std::string::npos
-                        && buf_split[5].find_first_of("game_pool_,") != std::string::npos
-                        && buf_split[6].find_first_of("chip,") != std::string::npos
-                        && buf_split[7].find_first_of("check_,") != std::string::npos
-                        && buf_split[8].find_first_of("connect,") != std::string::npos)
-                    {
-                        std::vector<std::string> connect_str;
-                        start.splitString(buf_split[8], ",", connect_str);
-                        int connect_flag = std::stoi(connect_str[1]);//long or short connecting;
-                        //如果标志为正确才能够执行ai的决策，否则重新开始
-                        if (buf_split[0] == "poker_info")
-                        {
-                            //通信的交互位
-                            std::cout << "收到一个请求，游戏id为" << buf_split[1] << std::endl;
-                            Ai_input ai_input;
-                            start.setAiInput(ai_input, buf_split);
-                            start.ai_fcr(ai_input);
-                            int fcr = start.ai_out_.fcr_bet_;
-                            std::cout << "理论上下注" << fcr << std::endl;
-                            std::stringstream ss;
-                            ss << "poker_fcr;" << buf_split[1] << ";" << start.ai_out_.fcrca_ << ";" << "send_end;";
-                            strcpy(sendbuf, ss.str().c_str());
-                            send(client_sockfd, sendbuf, strlen(sendbuf), 0);
-                            std::cout << "sendbuf2=" << sendbuf << std::endl;
-                            memset(sendbuf, 0, sizeof(sendbuf));
-                            memset(buf, 0, sizeof(buf));//清零
-                            if (connect_flag == 0)
-                            {
-                                close(client_sockfd);
-                            }
-                            continue;
-                        }
-                        else
-                        {
-                            strcpy(sendbuf, "error");
-                            send(client_sockfd, sendbuf, strlen(sendbuf), 0);
-                            std::cout << "waiting a buf1" << std::endl;
-                            close(client_sockfd);
-                            continue;
-                        }
-
-                    } else {
-                        std::cout << "wrong msg type" << std::endl;
-                        strcpy(sendbuf, "error");
-                        send(client_sockfd, sendbuf, strlen(sendbuf), 0);
-                        std::cout << "waiting a buf2" << std::endl;
-                        close(client_sockfd);
-                        continue;
-                    }
-                }
-                else//请求消息为空
+                else
                 {
-                    strcpy(sendbuf, "error");
-                    send(client_sockfd, sendbuf, strlen(sendbuf), 0);
-                    std::cout << "waiting a buf3" << std::endl;
-                    close(client_sockfd);
-                    continue;
+                    configTCP.errorSend();
+                    break;
                 }
-
             }
-
-       }
+        }
+        else
+        {
+            configTCP.errorSend();
+            continue;
+        }
+    }
        puts("exit success");
        exit(EXIT_SUCCESS);
        return 0;
